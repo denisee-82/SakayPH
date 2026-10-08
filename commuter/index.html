@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+
+ <title>SakayPH</title>
+
+ <link rel="stylesheet" href="../shared/base.css">
+ <link rel="stylesheet" href="commuter.css">
+</head>
+
+<body>
+
+<div class="app">
+
+ <div class="brand">
+  <div class="logo-box">
+   <!-- put <img src="logo.png"> here -->
+  </div>
+
+  <div>
+   <h1>SakayPH</h1>
+   <small>Davao City Jeepney Demand</small>
+  </div>
+ </div>
+
+ <div class="kicker">
+  DAVAO CITY - JEEPNEY ROUTES
+ </div>
+ <h2 class="title">
+  Where are you going?
+ </h2>
+ <p class="sub">
+  Choose a route to see the fare and how busy it is right now.
+  No account needed.
+ </p>
+ <div class="chips" id="chips"></div>
+ <div class="card">
+  <h3>Direction</h3>
+  <p
+          class="sub"
+          style="color:var(--p);font-weight:600;margin:0 0 10px"
+  >
+   Choose your starting point and destination
+  </p>
+  <label>From</label>
+  <input
+          id="from"
+          list="places"
+          placeholder="e.g. Ma-a"
+  >
+
+  <label>To</label>
+  <input
+          id="to"
+          list="places"
+          placeholder="e.g. Acacia"
+  >
+  <datalist id="places"></datalist>
+
+  <button class="btn" id="find">
+   Find Route
+  </button>
+  <button
+          class="btn ghost"
+          id="cancel"
+          style="margin-top:8px"
+  >
+   Cancel
+  </button>
+  <div
+          class="note"
+          id="err"
+          style="color:#c00"
+  ></div>
+  <iframe
+          id="map"
+          loading="lazy"
+          allowfullscreen
+  ></iframe>
+  <div class="note">
+   SakayPH shows fare and demand level.
+   It does not track vehicle location.
+  </div>
+ </div>
+
+ <div class="card hidden" id="results">
+  <h3>
+   Route found successfully
+  </h3>
+  <p class="sub" id="multi">
+   Choose a route
+  </p>
+  <div id="list"></div>
+ </div>
+
+ <div class="card hidden" id="selected">
+  <div
+          class="sub"
+          style="color:var(--p);font-weight:700;margin:0"
+  >
+   Selected Route
+  </div>
+  <h3
+          id="sRoute"
+          style="font-size:22px;margin:4px 0"
+  ></h3>
+  <div
+          class="price"
+          id="sFare"
+  ></div>
+  <div
+          class="note"
+          style="text-align:left"
+  >
+   Student / Senior / PWD:
+   <b id="sStu"></b>
+   (20% off)
+  </div>
+  <div
+          class="alert"
+          id="alertBox"
+  ></div>
+  <p
+          class="note"
+          style="text-align:left;font-weight:400"
+          id="basis"
+  ></p>
+  <p style="font-weight:700;font-size:14px">
+   Did you ride a jeepney on this route?
+   Tap to confirm
+  </p>
+  <button
+          class="btn"
+          id="rode"
+  >
+   ✓ I rode this route
+  </button>
+ </div>
+</div>
+
+<script src="../shared/data.js"></script>
+<script src="commuter.js"></script>
+
+</body>
+</html>

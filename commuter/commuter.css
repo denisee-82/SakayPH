@@ -1,0 +1,79 @@
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.chip {
+    border: 1px solid var(--p);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    background: #fff;
+    color: var(--p);
+    cursor: pointer;
+}
+
+#map {
+    width: 100%;
+    height: 240px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    margin-top: 12px;
+}
+
+.opt {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.opt.on {
+    background: #f3e9f2;
+    border-color: var(--p);
+}
+
+.opt b {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.price {
+    font-size: 54px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin: 6px 0 12px;
+}
+
+.alert {
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    color: #fff;
+    font-weight: 700;
+}
+
+.alert.High {
+    background: var(--red);
+}
+
+.alert.Moderate {
+    background: var(--amb);
+}
+
+.alert.Low {
+    background: var(--grn);
+}

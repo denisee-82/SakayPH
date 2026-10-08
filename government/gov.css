@@ -1,0 +1,155 @@
+.tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.tabs button {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--p);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--p);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.tabs .on {
+    background: var(--p);
+    color: #fff;
+}
+
+.who {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.who select {
+    margin: 0;
+}
+
+.pill {
+    background: var(--grn);
+    color: #fff;
+    border-radius: 99px;
+    padding: 4px 10px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.pill.gray {
+    background: #ddd;
+    color: var(--p);
+    float: right;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.grid .card {
+    margin: 0;
+}
+
+.stat span {
+    font-size: 12px;
+    font-weight: 700;
+    display: block;
+    color: #555;
+}
+
+.stat b {
+    font-size: 34px;
+    color: #888;
+    display: block;
+}
+
+.stat small {
+    font-size: 10px;
+    color: #999;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+th {
+    font-size: 10px;
+    color: var(--p2);
+    padding: 6px 2px;
+}
+
+td {
+    padding: 9px 2px;
+    border-top: 1px solid #eee;
+    text-align: center;
+}
+
+td:first-child {
+    text-align: left;
+    font-weight: 700;
+}
+
+.tag {
+    color: #fff;
+    border-radius: 99px;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.tag.High {
+    background: var(--red);
+}
+
+.tag.Moderate {
+    background: var(--amb);
+}
+
+.tag.Low {
+    background: var(--grn);
+}
+
+#chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 200px;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 24px;
+    padding-top: 16px;
+}
+
+#chart div {
+    flex: 1;
+    background: var(--p2);
+    position: relative;
+    border-radius: 3px 3px 0 0;
+    min-height: 2px;
+}
+
+#chart i {
+    position: absolute;
+    top: -14px;
+    width: 100%;
+    text-align: center;
+    font-size: 9px;
+    font-style: normal;
+}
+
+#chart u {
+    position: absolute;
+    bottom: -16px;
+    width: 100%;
+    text-align: center;
+    font-size: 8px;
+    text-decoration: none;
+}

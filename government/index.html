@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+ <meta charset="utf-8">
+ <meta
+         name="viewport"
+         content="width=device-width,initial-scale=1"
+ >
+
+ <title>SakayPH Government</title>
+
+ <link rel="stylesheet" href="../shared/base.css">
+ <link rel="stylesheet" href="gov.css">
+</head>
+
+<body>
+
+<div class="app">
+
+ <div class="brand">
+
+  <div class="logo-box">
+   <!-- put <img src="logo.png"> here -->
+  </div>
+
+  <div>
+   <h1>SakayPH</h1>
+   <small>Davao City Jeepney Demand</small>
+  </div>
+
+ </div>
+
+ <section id="auth">
+
+  <div class="kicker">
+   GOVERNMENT ACCESS
+  </div>
+
+  <h2 class="title">
+   Welcome
+  </h2>
+
+  <p class="sub">
+   Secure accounts for transport authority staff only.
+  </p>
+
+  <div class="card">
+
+   <div class="tabs">
+    <button
+            id="tLogin"
+            class="on"
+    >
+     Log in
+    </button>
+
+    <button id="tSign">
+     Sign up
+    </button>
+   </div>
+
+   <div
+           id="signOnly"
+           class="hidden"
+   >
+    <label>Full name</label>
+    <input id="name">
+
+    <label>Office / Agency</label>
+    <input
+            id="office"
+            value="CTTMO Davao City"
+    >
+   </div>
+
+   <label>Email</label>
+
+   <input
+           id="email"
+           type="email"
+   >
+
+   <label>Password</label>
+
+   <input
+           id="pass"
+           type="password"
+   >
+
+   <button
+           class="btn"
+           id="go"
+   >
+    Log in
+   </button>
+
+   <div
+           class="note"
+           id="aerr"
+           style="color:#c00"
+   ></div>
+
+  </div>
+
+ </section>
+
+ <section
+         id="dash"
+         class="hidden"
+ >
+
+  <div class="kicker">
+   DAVAO CITY - JEEPNEY ROUTES
+  </div>
+
+  <h2 class="title">
+   Government Dashboard
+  </h2>
+
+  <p class="sub">
+   Route Demand, commuter interest and confirmed boardings.
+  </p>
+
+  <div class="card">
+
+   <h3>
+    City Transport &amp; Traffic Management Office
+   </h3>
+
+   <div class="who">
+
+    <select id="city">
+     <option>Davao City (Pilot)</option>
+    </select>
+
+    <span class="pill">
+                        Near-real-time
+                    </span>
+
+   </div>
+
+   <p
+           class="sub"
+           id="meta"
+           style="margin:8px 0 0"
+   ></p>
+
+  </div>
+
+  <div class="grid">
+
+   <div class="card stat">
+
+                    <span>
+                        Total Searches Today
+                    </span>
+
+    <b id="sTotal">0</b>
+
+    <small>
+     All 5 pilot routes combined
+    </small>
+
+   </div>
+
+   <div class="card stat">
+
+                    <span>
+                        Red-Alert Routes
+                    </span>
+
+    <b id="sRed">0</b>
+
+    <small id="sRedN"></small>
+
+   </div>
+
+   <div class="card stat">
+
+                    <span>
+                        Busiest Route [10 MIN]
+                    </span>
+
+    <b
+            id="sBusy"
+            style="font-size:22px"
+    >
+     -
+    </b>
+
+    <small id="sBusyN"></small>
+
+   </div>
+
+   <div class="card stat">
+
+                    <span>
+                        Confirmed Boardings
+                    </span>
+
+    <b id="sBoard">0</b>
+
+    <small>
+     One-Tap confirmations
+    </small>
+
+   </div>
+
+  </div>
+
+  <div class="card">
+
+   <h3>
+    Route Demand
+    <span class="pill gray">
+                        LIVE 10-MINUTE
+                    </span>
+   </h3>
+
+   <table>
+
+    <thead>
+    <tr>
+     <th>ROUTE</th>
+     <th>SEARCHES (10 MIN)</th>
+     <th>DEMAND ALERT</th>
+     <th>THIS HOUR</th>
+    </tr>
+    </thead>
+
+    <tbody id="rows"></tbody>
+
+   </table>
+
+  </div>
+
+  <div class="card">
+
+   <label>ROUTE</label>
+
+   <select id="fRoute"></select>
+
+   <label>TIME OF DAY</label>
+
+   <select id="fTime">
+
+    <option value="8-20">
+     All Day (8 AM - 8 PM)
+    </option>
+
+    <option value="8-12">
+     Morning (8 AM - 12 PM)
+    </option>
+
+    <option value="12-17">
+     Afternoon (12 - 5 PM)
+    </option>
+
+    <option value="17-20">
+     Evening (5 - 8 PM)
+    </option>
+
+   </select>
+
+   <p
+           class="note"
+           style="text-align:left;font-weight:400"
+   >
+    Filters apply to the searches-per-hour chart
+   </p>
+
+  </div>
+
+  <div class="card">
+
+   <h3 id="cTitle">
+    Searches per hour
+   </h3>
+
+   <div id="chart"></div>
+
+  </div>
+
+  <button
+          class="btn ghost"
+          id="demo"
+  >
+   Load demo data
+  </button>
+
+  <button
+          class="btn ghost"
+          id="clear"
+          style="margin-top:8px"
+  >
+   Clear data
+  </button>
+
+  <button
+          class="btn"
+          id="out"
+          style="margin-top:8px"
+  >
+   Log out
+  </button>
+
+ </section>
+
+</div>
+
+<script src="../shared/data.js"></script>
+<script src="gov.js"></script>
+
+</body>
+
+</html>
