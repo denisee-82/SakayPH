@@ -1,30 +1,31 @@
 const $ = id => document.getElementById(id);
 
 const MSG = {
- High: 'High demand: expect a crowded ride',
- Moderate: 'Moderate demand: some wait expected',
- Low: 'Low demand: easy ride'
+    High: 'High demand: expect a crowded ride',
+    Moderate: 'Moderate demand: some wait expected',
+    Low: 'Low demand: easy ride'
 };
 
 const COLOR = {
- High: '#ff4040',
- Moderate: '#e0a96d',
- Low: '#4caf50'
+    High: '#ff4040',
+    Moderate: '#e0a96d',
+    Low: '#4caf50'
 };
 
 let current = null;
 
 function count(r) {
- return DB.get('events', []).filter(
-     e =>
-         e.type === 'search' &&
-         e.route === r &&
-         Date.now() - e.ts < 6e5
- ).length;
+    return DB.get('events', []).filter(
+        e =>
+            e.type === 'search' &&
+            e.route === r &&
+            Date.now() - e.ts < 6e5
+    ).length;
 }
 
-$('places').innerHTML = [...ROUTES, ...ROADS]
-    .map(p => `<option value="${p}">`)
+/* Search suggestions: landmarks only */
+$('places').innerHTML = LANDMARKS
+    .map(l => `<option value="${l.name}">`)
     .join('');
 
 $('chips').innerHTML = PILOT
@@ -37,62 +38,93 @@ $('chips').innerHTML = PILOT
     .join('');
 
 $('chips').onclick = e => {
- const r = e.target.closest('.chip')?.dataset.r;
+    const r = e.target.closest('.chip')?.dataset.r;
 
- if (r) {
-  $('to').value = r;
-  $('to').focus();
- }
+    if (r) {
+        $('to').value = r;
+        $('to').focus();
+    }
 };
 
 function setMap(from, to) {
- const q =
-     from && to
-         ? `saddr=${encodeURIComponent(from + ', Davao City')}&daddr=${encodeURIComponent(to + ', Davao City')}`
-         : `q=Davao+City`;
+    const q =
+        from && to
+            ? `saddr=${encodeURIComponent(from + ', Davao City')}&daddr=${encodeURIComponent(to + ', Davao City')}`
+            : `q=Davao+City`;
 
- $('map').src = `https://maps.google.com/maps?${q}&output=embed`;
+    $('map').src = `https://maps.google.com/maps?${q}&output=embed`;
 }
 
 setMap();
 
-function matches(t) {
- return ROUTES.filter(r =>
-     t.toLowerCase().includes(r.toLowerCase())
- );
+/* ---------- matching (helpers live in data.js) ---------- */
+
+// landmarks the typed text refers to, plus an exact route name
+// (so the quick-pick chips keep working)
+function matches(raw) {
+    const t = norm(raw);
+
+    return {
+        landmarks: LANDMARKS.filter(l =>
+            [l.name, ...l.aliases].some(n => fits(t, n))
+        ),
+        routes: ROUTES.filter(r => norm(r) === t)
+    };
 }
 
 $('find').onclick = () => {
- const f = $('from').value.trim();
- const t = $('to').value.trim();
+    const f = $('from').value.trim();
+    const t = $('to').value.trim();
 
- $('err').textContent = '';
+    $('err').textContent = '';
 
- if (!f || !t) {
-  $('err').textContent = 'Please enter both From and To.';
-  return;
- }
+    if (!f || !t) {
+        $('err').textContent = 'Please enter both From and To.';
+        return;
+    }
 
- setMap(f, t);
+    setMap(f, t);
 
- const found = [...new Set([...matches(t), ...matches(f)])];
+    // destination matches first, then starting point
+    const hits = new Map();   // route -> landmark it serves (or null)
+    const unmapped = [];      // landmarks found but with no jeepney yet
 
- if (!found.length) {
-  $('err').textContent =
-      'No jeepney route matched. Try a route name like Ma-a or Toril.';
-  return;
- }
+    [matches(t), matches(f)].forEach(m => {
+        m.landmarks.forEach(l => {
+            const rs = landmarkRoutes(l);
 
- $('multi').textContent =
-     found.length > 1
-         ? 'Multiple routes found. Choose one'
-         : 'Choose a route';
+            if (!rs.length) unmapped.push(l.name);
 
- $('list').innerHTML = found
-     .map(
-         (r, i) => `
+            rs.forEach(r => {
+                if (!hits.has(r)) hits.set(r, l.name);
+            });
+        });
+
+        m.routes.forEach(r => {
+            if (!hits.has(r)) hits.set(r, null);
+        });
+    });
+
+    const found = [...hits.keys()];
+
+    if (!found.length) {
+        $('err').textContent = unmapped.length
+            ? `No jeepney routes added for ${unmapped[0]} yet.`
+            : 'Landmark not found. Try SM City Davao or Bankerohan.';
+        return;
+    }
+
+    $('multi').textContent =
+        found.length > 1
+            ? 'Multiple jeepneys found. Choose one'
+            : 'Choose a jeepney';
+
+    $('list').innerHTML = found
+        .map(
+            (r, i) => `
                 <div class="opt" data-r="${r}">
                     <b>${i + 1} ${r}</b>
+                    ${hits.get(r) ? `<small>Serves ${hits.get(r)}</small>` : ''}
 
                     <div class="row">
                         <span>Regular fare</span>
@@ -105,69 +137,69 @@ $('find').onclick = () => {
                     </div>
                 </div>
             `
-     )
-     .join('');
+        )
+        .join('');
 
- $('results').classList.remove('hidden');
- $('selected').classList.add('hidden');
+    $('results').classList.remove('hidden');
+    $('selected').classList.add('hidden');
 
- $('results').scrollIntoView({
-  behavior: 'smooth'
- });
+    $('results').scrollIntoView({
+        behavior: 'smooth'
+    });
 };
 
 $('list').onclick = e => {
- const o = e.target.closest('.opt');
+    const o = e.target.closest('.opt');
 
- if (!o) return;
+    if (!o) return;
 
- document
-     .querySelectorAll('.opt')
-     .forEach(x => x.classList.remove('on'));
+    document
+        .querySelectorAll('.opt')
+        .forEach(x => x.classList.remove('on'));
 
- o.classList.add('on');
+    o.classList.add('on');
 
- current = o.dataset.r;
+    current = o.dataset.r;
 
- DB.log('search', current);
+    DB.log('search', current);
 
- const n = count(current);
- const lv = level(n);
+    const n = count(current);
+    const lv = level(n);
 
- $('sRoute').textContent = current;
- $('sFare').textContent = '₱' + REGULAR_FARE.toFixed(2);
- $('sStu').textContent = '₱' + STUDENT_FARE.toFixed(2);
+    $('sRoute').textContent = current;
+    $('sFare').textContent = '₱' + REGULAR_FARE.toFixed(2);
+    $('sStu').textContent = '₱' + STUDENT_FARE.toFixed(2);
 
- $('alertBox').textContent = MSG[lv];
- $('alertBox').className = 'alert ' + lv;
+    $('alertBox').textContent = MSG[lv];
+    $('alertBox').className = 'alert ' + lv;
 
- $('basis').textContent =
-     `Based on commuter searches in the last 10 minutes - ${n} search${n == 1 ? '' : 'es'}`;
+    $('basis').textContent =
+        `Based on commuter searches in the last 10 minutes - ${n} search${n == 1 ? '' : 'es'}`;
 
- $('rode').disabled = false;
- $('rode').textContent = '✓ I rode this route';
+    $('rode').disabled = false;
+    $('rode').textContent = '✓ I rode this route';
 
- $('selected').classList.remove('hidden');
+    $('selected').classList.remove('hidden');
 
- $('selected').scrollIntoView({
-  behavior: 'smooth'
- });
+    $('selected').scrollIntoView({
+        behavior: 'smooth'
+    });
 };
 
 $('rode').onclick = () => {
- DB.log('boarding', current);
- $('rode').textContent = 'Thanks! Boarding confirmed';
- $('rode').disabled = true;
+    DB.log('boarding', current);
+    $('rode').textContent = 'Thanks! Boarding confirmed';
+    $('rode').disabled = true;
 };
 
 $('cancel').onclick = () => {
- $('from').value = '';
- $('to').value = '';
- $('err').textContent = '';
+    $('from').value = '';
+    $('to').value = '';
+    $('err').textContent = '';
 
- ['results', 'selected'].forEach(id =>
-     $(id).classList.add('hidden')
- );
+    ['results', 'selected'].forEach(id =>
+        $(id).classList.add('hidden')
+    );
 
- setMap();
+    setMap();
 };

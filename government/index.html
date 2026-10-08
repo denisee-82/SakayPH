@@ -2,310 +2,191 @@
 <html lang="en">
 
 <head>
- <meta charset="utf-8">
- <meta
-         name="viewport"
-         content="width=device-width,initial-scale=1"
- >
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
 
- <title>SakayPH Government</title>
+    <title>SakayPH Government</title>
 
- <link rel="stylesheet" href="../shared/base.css">
- <link rel="stylesheet" href="gov.css">
+    <link rel="stylesheet" href="../shared/base.css">
+    <link rel="stylesheet" href="gov.css">
 </head>
 
 <body>
 
 <div class="app">
 
- <div class="brand">
-
-  <div class="logo-box">
-   <!-- put <img src="logo.png"> here -->
-  </div>
-
-  <div>
-   <h1>SakayPH</h1>
-   <small>Davao City Jeepney Demand</small>
-  </div>
-
- </div>
+    <div class="brand">
 
- <section id="auth">
-
-  <div class="kicker">
-   GOVERNMENT ACCESS
-  </div>
-
-  <h2 class="title">
-   Welcome
-  </h2>
+        <div class="logo-box">
+            <!-- put <img src="logo.png"> here -->
+        </div>
 
-  <p class="sub">
-   Secure accounts for transport authority staff only.
-  </p>
-
-  <div class="card">
+        <div>
+            <h1>SakayPH</h1>
+            <small>Davao City Jeepney Demand</small>
+        </div>
 
-   <div class="tabs">
-    <button
-            id="tLogin"
-            class="on"
-    >
-     Log in
-    </button>
+    </div>
 
-    <button id="tSign">
-     Sign up
-    </button>
-   </div>
+    <section id="auth">
 
-   <div
-           id="signOnly"
-           class="hidden"
-   >
-    <label>Full name</label>
-    <input id="name">
+        <div class="kicker">GOVERNMENT ACCESS</div>
 
-    <label>Office / Agency</label>
-    <input
-            id="office"
-            value="CTTMO Davao City"
-    >
-   </div>
+        <h2 class="title">Welcome</h2>
 
-   <label>Email</label>
+        <p class="sub">Secure accounts for transport authority staff only.</p>
 
-   <input
-           id="email"
-           type="email"
-   >
+        <div class="card">
 
-   <label>Password</label>
+            <div class="tabs">
+                <button id="tLogin" class="on">Log in</button>
+                <button id="tSign">Sign up</button>
+            </div>
 
-   <input
-           id="pass"
-           type="password"
-   >
+            <div id="signOnly" class="hidden">
+                <label>Full name</label>
+                <input id="name">
 
-   <button
-           class="btn"
-           id="go"
-   >
-    Log in
-   </button>
+                <label>Office / Agency</label>
+                <input id="office" value="CTTMO Davao City">
+            </div>
 
-   <div
-           class="note"
-           id="aerr"
-           style="color:#c00"
-   ></div>
+            <label>Email</label>
+            <input id="email" type="email">
 
-  </div>
+            <label>Password</label>
+            <input id="pass" type="password">
 
- </section>
+            <button class="btn" id="go">Log in</button>
 
- <section
-         id="dash"
-         class="hidden"
- >
+            <div class="note" id="aerr" style="color:#c00"></div>
 
-  <div class="kicker">
-   DAVAO CITY - JEEPNEY ROUTES
-  </div>
+        </div>
 
-  <h2 class="title">
-   Government Dashboard
-  </h2>
+    </section>
 
-  <p class="sub">
-   Route Demand, commuter interest and confirmed boardings.
-  </p>
+    <section id="dash" class="hidden">
 
-  <div class="card">
+        <div class="dash-head">
 
-   <h3>
-    City Transport &amp; Traffic Management Office
-   </h3>
+            <div class="kicker">DAVAO CITY - JEEPNEY ROUTES</div>
 
-   <div class="who">
+            <h2 class="title">Government Dashboard</h2>
 
-    <select id="city">
-     <option>Davao City (Pilot)</option>
-    </select>
+            <p class="sub">Route Demand, commuter interest and confirmed boardings.</p>
 
-    <span class="pill">
-                        Near-real-time
-                    </span>
+        </div>
 
-   </div>
+        <div class="card org">
 
-   <p
-           class="sub"
-           id="meta"
-           style="margin:8px 0 0"
-   ></p>
+            <h3>City Transport &amp; Traffic Management Office</h3>
 
-  </div>
+            <div class="who">
 
-  <div class="grid">
+                <select id="city">
+                    <option>Davao City (Pilot)</option>
+                </select>
 
-   <div class="card stat">
+                <span class="pill">Near-real-time</span>
 
-                    <span>
-                        Total Searches Today
-                    </span>
+            </div>
 
-    <b id="sTotal">0</b>
+            <p class="sub" id="meta" style="margin:8px 0 0"></p>
 
-    <small>
-     All 5 pilot routes combined
-    </small>
+        </div>
 
-   </div>
+        <div class="grid">
 
-   <div class="card stat">
+            <div class="card stat">
+                <span>Total Searches Today</span>
+                <b id="sTotal">0</b>
+                <small>All routes combined</small>
+            </div>
 
-                    <span>
-                        Red-Alert Routes
-                    </span>
+            <div class="card stat">
+                <span>Red-Alert Routes</span>
+                <b id="sRed">0</b>
+                <small id="sRedN"></small>
+            </div>
 
-    <b id="sRed">0</b>
+            <div class="card stat">
+                <span>Busiest Route [10 MIN]</span>
+                <b id="sBusy" style="font-size:18px;line-height:1.3;margin:6px 0">-</b>
+                <small id="sBusyN"></small>
+            </div>
 
-    <small id="sRedN"></small>
+            <div class="card stat">
+                <span>Confirmed Boardings</span>
+                <b id="sBoard">0</b>
+                <small>One-Tap confirmations</small>
+            </div>
 
-   </div>
+        </div>
 
-   <div class="card stat">
+        <div class="card demand">
 
-                    <span>
-                        Busiest Route [10 MIN]
-                    </span>
+            <h3>
+                Route Demand
+                <span class="pill gray">LIVE 10-MINUTE</span>
+            </h3>
 
-    <b
-            id="sBusy"
-            style="font-size:22px"
-    >
-     -
-    </b>
+            <div class="tbl">
+                <table>
 
-    <small id="sBusyN"></small>
+                    <thead>
+                    <tr>
+                        <th>ROUTE</th>
+                        <th>SEARCHES (10 MIN)</th>
+                        <th>DEMAND ALERT</th>
+                        <th>THIS HOUR</th>
+                    </tr>
+                    </thead>
 
-   </div>
+                    <tbody id="rows"></tbody>
 
-   <div class="card stat">
+                </table>
+            </div>
 
-                    <span>
-                        Confirmed Boardings
-                    </span>
+        </div>
 
-    <b id="sBoard">0</b>
+        <div class="side">
 
-    <small>
-     One-Tap confirmations
-    </small>
+            <div class="card">
 
-   </div>
+                <label>ROUTE</label>
+                <select id="fRoute"></select>
 
-  </div>
+                <label>TIME OF DAY</label>
+                <select id="fTime">
+                    <option value="8-20">All Day (8 AM - 8 PM)</option>
+                    <option value="8-12">Morning (8 AM - 12 PM)</option>
+                    <option value="12-17">Afternoon (12 - 5 PM)</option>
+                    <option value="17-20">Evening (5 - 8 PM)</option>
+                </select>
 
-  <div class="card">
+                <p class="note" style="text-align:left;font-weight:400">
+                    Filters apply to the searches-per-hour chart
+                </p>
 
-   <h3>
-    Route Demand
-    <span class="pill gray">
-                        LIVE 10-MINUTE
-                    </span>
-   </h3>
+            </div>
 
-   <table>
+            <div class="card">
 
-    <thead>
-    <tr>
-     <th>ROUTE</th>
-     <th>SEARCHES (10 MIN)</th>
-     <th>DEMAND ALERT</th>
-     <th>THIS HOUR</th>
-    </tr>
-    </thead>
+                <h3 id="cTitle">Searches per hour</h3>
 
-    <tbody id="rows"></tbody>
+                <div id="chart"></div>
 
-   </table>
+            </div>
 
-  </div>
+        </div>
 
-  <div class="card">
+        <div class="actions">
+            <button class="btn ghost" id="demo">Load demo data</button>
+            <button class="btn ghost" id="clear">Clear data</button>
+            <button class="btn" id="out">Log out</button>
+        </div>
 
-   <label>ROUTE</label>
-
-   <select id="fRoute"></select>
-
-   <label>TIME OF DAY</label>
-
-   <select id="fTime">
-
-    <option value="8-20">
-     All Day (8 AM - 8 PM)
-    </option>
-
-    <option value="8-12">
-     Morning (8 AM - 12 PM)
-    </option>
-
-    <option value="12-17">
-     Afternoon (12 - 5 PM)
-    </option>
-
-    <option value="17-20">
-     Evening (5 - 8 PM)
-    </option>
-
-   </select>
-
-   <p
-           class="note"
-           style="text-align:left;font-weight:400"
-   >
-    Filters apply to the searches-per-hour chart
-   </p>
-
-  </div>
-
-  <div class="card">
-
-   <h3 id="cTitle">
-    Searches per hour
-   </h3>
-
-   <div id="chart"></div>
-
-  </div>
-
-  <button
-          class="btn ghost"
-          id="demo"
-  >
-   Load demo data
-  </button>
-
-  <button
-          class="btn ghost"
-          id="clear"
-          style="margin-top:8px"
-  >
-   Clear data
-  </button>
-
-  <button
-          class="btn"
-          id="out"
-          style="margin-top:8px"
-  >
-   Log out
-  </button>
-
- </section>
+    </section>
 
 </div>
 
