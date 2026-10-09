@@ -1,21 +1,7 @@
 const $ = id => document.getElementById(id);
 
 let mode = 'login';
-
-async function hash(s) {
-    try {
-        const b = await crypto.subtle.digest(
-            'SHA-256',
-            new TextEncoder().encode(s)
-        );
-
-        return [...new Uint8Array(b)]
-            .map(x => x.toString(16).padStart(2, '0'))
-            .join('');
-    } catch (e) {
-        return btoa(s);
-    }
-}
+let timer = null;
 
 function tab(m) {
     mode = m;
@@ -34,64 +20,64 @@ function tab(m) {
 $('tLogin').onclick = () => tab('login');
 $('tSign').onclick = () => tab('sign');
 
+// Accounts and sessions now live on the server (PHP + MySQL).
+// The password is sent to the server over the page's connection,
+// so run this on HTTPS when it goes live.
 $('go').onclick = async () => {
     const email = $('email').value.trim().toLowerCase();
     const pw = $('pass').value;
-    const users = DB.get('users', []);
 
     $('aerr').textContent = '';
 
-    if (!email || pw.length < 6) {
+    if (!email || pw.length < 8) {
         $('aerr').textContent =
-            'Enter an email and a password of 6+ characters.';
+            'Enter an email and a password of 8+ characters.';
         return;
     }
 
-    const h = await hash(pw);
+    $('go').disabled = true;
 
-    if (mode === 'sign') {
-        if (users.some(u => u.email === email)) {
-            $('aerr').textContent =
-                'Email already registered.';
-            return;
-        }
+    try {
+        await api(
+            'auth.php',
+            mode === 'sign'
+                ? {
+                    action: 'signup',
+                    email,
+                    password: pw,
+                    name: $('name').value,
+                    office: $('office').value,
+                    invite: $('invite').value
+                }
+                : { action: 'login', email, password: pw }
+        );
 
-        users.push({
-            email,
-            hash: h,
-            name: $('name').value,
-            office: $('office').value
-        });
-
-        DB.set('users', users);
-        DB.set('session', email);
-
-        show();
-    } else {
-        if (!users.some(u => u.email === email && u.hash === h)) {
-            $('aerr').textContent =
-                'Wrong email or password.';
-            return;
-        }
-
-        DB.set('session', email);
-        show();
+        $('pass').value = '';
+        show(true);
+    } catch (e) {
+        $('aerr').textContent = e.message;
     }
+
+    $('go').disabled = false;
 };
 
-$('out').onclick = () => {
-    localStorage.removeItem('sakayph_session');
-    show();
+$('out').onclick = async () => {
+    try {
+        await api('auth.php', { action: 'logout' });
+    } catch (e) { /* leave the dashboard anyway */ }
+
+    show(false);
 };
 
-function show() {
-    const on = !!DB.get('session', null);
-
+function show(on) {
     $('auth').classList.toggle('hidden', on);
     $('dash').classList.toggle('hidden', !on);
 
+    clearInterval(timer);
+
     if (on) {
         render();
+        timer = setInterval(render, 5000);
     }
 }
 
@@ -103,8 +89,8 @@ $('fRoute').innerHTML = ROUTES
     $(id).onchange = render;
 });
 
-$('demo').onclick = () => {
-    const ev = DB.get('events', []);
+$('demo').onclick = async () => {
+    const ev = [];
     const now = Date.now();
 
     ROUTES.forEach(r => {
@@ -136,54 +122,64 @@ $('demo').onclick = () => {
         }
     });
 
-    DB.set('events', ev);
-    render();
-};
+    $('demo').disabled = true;
 
-$('clear').onclick = () => {
-    if (confirm('Delete all search data?')) {
-        DB.set('events', []);
+    try {
+        await api('admin.php', { action: 'demo', events: ev });
         render();
+    } catch (e) {
+        alert(e.message);
     }
+
+    $('demo').disabled = false;
 };
 
-function render() {
-    if (!DB.get('session', null)) {
+$('clear').onclick = async () => {
+    if (!confirm('Delete all search data?')) {
         return;
     }
 
-    const ev = DB.get('events', []);
-    const now = Date.now();
-    const day = new Date().setHours(0, 0, 0, 0);
+    try {
+        await api('admin.php', { action: 'clear' });
+        render();
+    } catch (e) {
+        alert(e.message);
+    }
+};
 
-    // only count events for routes in the current ROUTES list,
-    // so old/renamed routes from earlier data don't create stray rows
+async function render() {
+    if ($('dash').classList.contains('hidden')) {
+        return;
+    }
+
+    const r = $('fRoute').value;
+    let data;
+
+    try {
+        data = await api('stats.php?route=' + encodeURIComponent(r));
+    } catch (e) {
+        if (e.status === 401) {
+            show(false);
+            $('aerr').textContent = 'Session ended. Please log in again.';
+        } else {
+            $('meta').textContent = 'Cannot load data: ' + e.message;
+        }
+        return;
+    }
+
+    // only count routes in the current ROUTES list,
+    // so old/renamed routes don't create stray rows
     const known = new Set(ROUTES);
+    const byRoute = new Map(data.rows.map(x => [x.route, x]));
 
-    const S = ev.filter(
-        e => e.type === 'search' && known.has(e.route)
-    );
-    const B = ev.filter(
-        e =>
-            e.type === 'boarding' &&
-            known.has(e.route) &&
-            e.ts >= day
-    );
-
-    const routes = ROUTES;
-
-    const rows = routes
-        .map(r => {
-            const s = S.filter(e => e.route === r);
+    const rows = ROUTES
+        .map(name => {
+            const x = byRoute.get(name);
 
             return {
-                r,
-                m10: s.filter(
-                    e => now - e.ts < 6e5
-                ).length,
-                hr: s.filter(
-                    e => now - e.ts < 3.6e6
-                ).length
+                r: name,
+                m10: x ? x.m10 : 0,
+                hr: x ? x.hr : 0
             };
         })
         .sort(
@@ -196,13 +192,13 @@ function render() {
         x => level(x.m10) === 'High'
     );
 
-    $('sTotal').textContent = S.filter(
-        e => e.ts >= day
-    ).length;
+    const known_rows = data.rows.filter(x => known.has(x.route));
+
+    $('sTotal').textContent = known_rows.reduce((s, x) => s + x.s_today, 0);
 
     $('sRed').textContent = red.length;
 
-    // with 80 routes the list can get long: show the top 3 + a count
+    // with many routes the list can get long: show the top 3 + a count
     $('sRedN').textContent =
         red.length > 3
             ? red.slice(0, 3).map(x => x.r).join(', ') +
@@ -219,7 +215,7 @@ function render() {
             ? rows[0].m10 + ' searches'
             : '';
 
-    $('sBoard').textContent = B.length;
+    $('sBoard').textContent = known_rows.reduce((s, x) => s + x.b_today, 0);
 
     $('rows').innerHTML = rows
         .map(
@@ -243,8 +239,6 @@ function render() {
         `aggregated, non-identifying data · ` +
         `Updated ${new Date().toLocaleTimeString()}`;
 
-    const r = $('fRoute').value;
-
     const [a, b] = $('fTime').value
         .split('-')
         .map(Number);
@@ -252,20 +246,8 @@ function render() {
     const bins = {};
 
     for (let h = a; h < b; h++) {
-        bins[h] = 0;
+        bins[h] = data.hours?.[h] ?? 0;
     }
-
-    S.filter(
-        e =>
-            e.route === r &&
-            e.ts >= day
-    ).forEach(e => {
-        const h = new Date(e.ts).getHours();
-
-        if (h in bins) {
-            bins[h]++;
-        }
-    });
 
     const mx = Math.max(
         1,
@@ -293,8 +275,11 @@ function render() {
             .join('');
 }
 
-window.addEventListener('storage', render);
-
-setInterval(render, 5000);
-
-show();
+// are we already logged in? (PHP session cookie)
+api('auth.php')
+    .then(r => show(r.loggedIn))
+    .catch(() => {
+        show(false);
+        $('aerr').textContent =
+            'Cannot reach the server. Is Apache/PHP and MySQL running?';
+    });

@@ -17,13 +17,21 @@ const RANK = { Low: 0, Moderate: 1, High: 2 };
 let plans = [];     // trip options currently listed
 let current = null; // the plan the commuter picked
 
-function count(r) {
-    return DB.get('events', []).filter(
-        e =>
-            e.type === 'search' &&
-            e.route === r &&
-            Date.now() - e.ts < 6e5
-    ).length;
+// demand comes from the server: route -> { m10, hr } (searches)
+let demand = {};
+let demandOk = false;
+
+const count = r => demand[r]?.m10 ?? 0;
+
+async function refreshDemand() {
+    try {
+        demand = (await api('demand.php')).routes;
+        demandOk = true;
+    } catch (e) {
+        demandOk = false;
+    }
+
+    drawChips();
 }
 
 /* Search suggestions: landmarks only */
@@ -31,14 +39,19 @@ $('places').innerHTML = LANDMARKS
     .map(l => `<option value="${l.name}">`)
     .join('');
 
-$('chips').innerHTML = PILOT
-    .map(
-        r =>
-            `<button class="chip" data-r="${r}">
-                <span style="color:${COLOR[level(count(r))]}">●</span> ${r}
-            </button>`
-    )
-    .join('');
+function drawChips() {
+    $('chips').innerHTML = PILOT
+        .map(
+            r =>
+                `<button class="chip" data-r="${r}">
+                    <span style="color:${demandOk ? COLOR[level(count(r))] : '#999'}">●</span> ${r}
+                </button>`
+        )
+        .join('');
+}
+
+drawChips();
+refreshDemand();
 
 $('chips').onclick = e => {
     const r = e.target.closest('.chip')?.dataset.r;
@@ -185,7 +198,7 @@ $('find').onclick = () => {
     });
 };
 
-$('list').onclick = e => {
+$('list').onclick = async e => {
     const o = e.target.closest('.opt');
 
     if (!o) return;
@@ -203,7 +216,8 @@ $('list').onclick = e => {
 
     // one search is logged for every jeepney on the trip,
     // so the dashboard counts demand on each route
-    legs.forEach(l => DB.log('search', l.route));
+    await Promise.all(legs.map(l => DB.log('search', l.route)));
+    await refreshDemand();
 
     const stats = legs.map(l => {
         const c = count(l.route);
@@ -228,8 +242,10 @@ $('list').onclick = e => {
                         ${s.from ? `<div>Board at ${s.from}, get off at ${s.to}</div>` : ''}
                         <div>
                             Demand:
-                            <span style="color:${COLOR[s.lv]}">●</span> ${s.lv}
-                            (${s.n} search${s.n == 1 ? '' : 'es'})
+                            ${demandOk
+                    ? `<span style="color:${COLOR[s.lv]}">●</span> ${s.lv}
+                                   (${s.n} search${s.n == 1 ? '' : 'es'})`
+                    : 'unavailable right now'}
                         </div>
                     </div>
                 `
@@ -241,13 +257,15 @@ $('list').onclick = e => {
                </div>`
             : '');
 
-    $('alertBox').textContent = MSG[worst];
-    $('alertBox').className = 'alert ' + worst;
+    $('alertBox').textContent = demandOk ? MSG[worst] : 'Demand data unavailable right now';
+    $('alertBox').className = 'alert ' + (demandOk ? worst : 'None');
 
     $('basis').textContent =
-        n > 1
-            ? 'Based on commuter searches in the last 10 minutes. The alert shows the busiest ride on your trip.'
-            : `Based on commuter searches in the last 10 minutes - ${stats[0].n} search${stats[0].n == 1 ? '' : 'es'}`;
+        !demandOk
+            ? ''
+            : n > 1
+                ? 'Based on commuter searches in the last 10 minutes. The alert shows the busiest ride on your trip.'
+                : `Based on commuter searches in the last 10 minutes - ${stats[0].n} search${stats[0].n == 1 ? '' : 'es'}`;
 
     $('rode').disabled = false;
     $('rode').textContent = n > 1 ? '✓ I rode this trip' : '✓ I rode this route';

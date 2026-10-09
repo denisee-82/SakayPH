@@ -765,36 +765,45 @@ const MODERATE = 5;
 
 
 
-const DB = {
-    get(k, d) {
-        try {
-            return (
-                JSON.parse(
-                    localStorage.getItem("sakayph_" + k)
-                ) ?? d
-            );
-        } catch (e) {
-            return d;
+/*
+ * Talks to the PHP files in /api (which talk to the MySQL database).
+ * Pages in /commuter and /gov reach it at ../api/
+ */
+const API_BASE = "../api/";
+
+async function api(file, body) {
+    const opts = body
+        ? {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
         }
-    },
+        : {};
 
-    set(k, v) {
-        localStorage.setItem(
-            "sakayph_" + k,
-            JSON.stringify(v)
-        );
-    },
+    const res = await fetch(API_BASE + file, {
+        credentials: "same-origin",
+        ...opts
+    });
 
+    let data = null;
+
+    try {
+        data = await res.json();
+    } catch (e) { /* not JSON */ }
+
+    if (!res.ok) {
+        const err = new Error((data && data.error) || "Request failed");
+        err.status = res.status;
+        throw err;
+    }
+
+    return data;
+}
+
+const DB = {
+    // record a search / boarding. Best effort: the page keeps working if it fails.
     log(type, route) {
-        const events = this.get("events", []);
-
-        events.push({
-            type,
-            route,
-            ts: Date.now()
-        });
-
-        this.set("events", events);
+        return api("log.php", { type, route }).catch(() => { });
     }
 };
 
