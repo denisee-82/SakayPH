@@ -77,3 +77,26 @@
 .alert.Low {
     background: var(--grn);
 }
+
+.opt small {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+}
+
+.leg {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+.leg b {
+    display: block;
+    margin-bottom: 2px;
+}
+
+.legs {
+    margin: 10px 0;
+}

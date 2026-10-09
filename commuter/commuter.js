@@ -12,7 +12,10 @@ const COLOR = {
     Low: '#4caf50'
 };
 
-let current = null;
+const RANK = { Low: 0, Moderate: 1, High: 2 };
+
+let plans = [];     // trip options currently listed
+let current = null; // the plan the commuter picked
 
 function count(r) {
     return DB.get('events', []).filter(
@@ -46,6 +49,7 @@ $('chips').onclick = e => {
     }
 };
 
+// The map is a driving reference only; jeepneys follow their own routes.
 function setMap(from, to) {
     const q =
         from && to
@@ -72,6 +76,9 @@ function matches(raw) {
     };
 }
 
+// all the route places the matched landmarks are served at
+const stopsOf = landmarks => [...new Set(landmarks.flatMap(l => l.stops))];
+
 $('find').onclick = () => {
     const f = $('from').value.trim();
     const t = $('to').value.trim();
@@ -85,59 +92,89 @@ $('find').onclick = () => {
 
     setMap(f, t);
 
-    // destination matches first, then starting point
-    const hits = new Map();   // route -> landmark it serves (or null)
-    const unmapped = [];      // landmarks found but with no jeepney yet
+    const fm = matches(f);
+    const tm = matches(t);
 
-    [matches(t), matches(f)].forEach(m => {
-        m.landmarks.forEach(l => {
-            const rs = landmarkRoutes(l);
+    if (!fm.landmarks.length && !fm.routes.length) {
+        $('err').textContent =
+            `Starting point "${f}" not found. Try Bankerohan or SM City Davao.`;
+        return;
+    }
 
-            if (!rs.length) unmapped.push(l.name);
+    if (!tm.landmarks.length && !tm.routes.length) {
+        $('err').textContent =
+            `Destination "${t}" not found. Try SM City Davao or Bankerohan.`;
+        return;
+    }
 
-            rs.forEach(r => {
-                if (!hits.has(r)) hits.set(r, l.name);
-            });
-        });
+    const fromStops = stopsOf(fm.landmarks);
+    const toStops = stopsOf(tm.landmarks);
 
-        m.routes.forEach(r => {
-            if (!hits.has(r)) hits.set(r, null);
-        });
+    // 1) real trips: direct rides, or one transfer if there is no direct ride
+    plans = fromStops.length && toStops.length
+        ? planTrip(fromStops, toStops)
+        : [];
+
+    // 2) a route typed by name (the quick-pick chips) is listed too
+    [...new Set([...tm.routes, ...fm.routes])].forEach(r => {
+        if (plans.some(p => p.legs.length === 1 && p.legs[0].route === r)) return;
+
+        let note = '';
+
+        if (!PATHS[r]) {
+            note = 'Stops for this route are not mapped yet';
+        } else if (fromStops.length && !fromStops.some(s => PATHS[r].includes(s))) {
+            note = `Does not pass ${f}`;
+        }
+
+        plans.push({ legs: [{ route: r, from: null, to: null }], note });
     });
 
-    const found = [...hits.keys()];
+    if (!plans.length) {
+        const unmapped = [...fm.landmarks, ...tm.landmarks]
+            .filter(l => !landmarkRoutes(l).length)
+            .map(l => l.name);
 
-    if (!found.length) {
         $('err').textContent = unmapped.length
             ? `No jeepney routes added for ${unmapped[0]} yet.`
-            : 'Landmark not found. Try SM City Davao or Bankerohan.';
+            : `No jeepney found from ${f} to ${t} within 2 rides.`;
         return;
     }
 
     $('multi').textContent =
-        found.length > 1
-            ? 'Multiple jeepneys found. Choose one'
+        plans.length > 1
+            ? 'Multiple options found. Choose one'
             : 'Choose a jeepney';
 
-    $('list').innerHTML = found
-        .map(
-            (r, i) => `
-                <div class="opt" data-r="${r}">
-                    <b>${i + 1} ${r}</b>
-                    ${hits.get(r) ? `<small>Serves ${hits.get(r)}</small>` : ''}
+    $('list').innerHTML = plans
+        .map((p, i) => {
+            const n = p.legs.length;
+
+            return `
+                <div class="opt" data-i="${i}">
+                    <b>${i + 1} ${p.legs.map(l => l.route).join(' → ')}</b>
+                    ${n > 1 ? `<small>1 transfer, at ${p.legs[0].to}</small>` : ''}
+                    ${p.legs
+                .map(l =>
+                    l.from
+                        ? `<small>${l.route}: board at ${l.from}, get off at ${l.to}</small>`
+                        : ''
+                )
+                .join('')}
+                    ${p.note ? `<small>${p.note}</small>` : ''}
 
                     <div class="row">
-                        <span>Regular fare</span>
+                        <span>Regular fare${n > 1 ? ' per ride' : ''}</span>
                         <span>₱${REGULAR_FARE}</span>
                     </div>
 
                     <div class="row">
-                        <span>Total Fare</span>
-                        <span>₱${REGULAR_FARE}</span>
+                        <span>Total Fare${n > 1 ? ` (${n} rides)` : ''}</span>
+                        <span>₱${REGULAR_FARE * n}</span>
                     </div>
                 </div>
-            `
-        )
+            `;
+        })
         .join('');
 
     $('results').classList.remove('hidden');
@@ -159,25 +196,61 @@ $('list').onclick = e => {
 
     o.classList.add('on');
 
-    current = o.dataset.r;
+    current = plans[+o.dataset.i];
 
-    DB.log('search', current);
+    const legs = current.legs;
+    const n = legs.length;
 
-    const n = count(current);
-    const lv = level(n);
+    // one search is logged for every jeepney on the trip,
+    // so the dashboard counts demand on each route
+    legs.forEach(l => DB.log('search', l.route));
 
-    $('sRoute').textContent = current;
-    $('sFare').textContent = '₱' + REGULAR_FARE.toFixed(2);
-    $('sStu').textContent = '₱' + STUDENT_FARE.toFixed(2);
+    const stats = legs.map(l => {
+        const c = count(l.route);
+        return { ...l, n: c, lv: level(c) };
+    });
 
-    $('alertBox').textContent = MSG[lv];
-    $('alertBox').className = 'alert ' + lv;
+    const worst = stats.reduce(
+        (w, s) => (RANK[s.lv] > RANK[w] ? s.lv : w),
+        'Low'
+    );
+
+    $('sRoute').textContent = legs.map(l => l.route).join(' → ');
+    $('sFare').textContent = '₱' + (REGULAR_FARE * n).toFixed(2);
+    $('sStu').textContent = '₱' + (STUDENT_FARE * n).toFixed(2);
+
+    $('sLegs').innerHTML =
+        stats
+            .map(
+                (s, i) => `
+                    <div class="leg">
+                        <b>${n > 1 ? `Ride ${i + 1}: ` : ''}${s.route}</b>
+                        ${s.from ? `<div>Board at ${s.from}, get off at ${s.to}</div>` : ''}
+                        <div>
+                            Demand:
+                            <span style="color:${COLOR[s.lv]}">●</span> ${s.lv}
+                            (${s.n} search${s.n == 1 ? '' : 'es'})
+                        </div>
+                    </div>
+                `
+            )
+            .join('') +
+        (n > 1
+            ? `<div class="note" style="text-align:left">
+                   Transfer at ${legs[0].to}. Fare is paid on each ride.
+               </div>`
+            : '');
+
+    $('alertBox').textContent = MSG[worst];
+    $('alertBox').className = 'alert ' + worst;
 
     $('basis').textContent =
-        `Based on commuter searches in the last 10 minutes - ${n} search${n == 1 ? '' : 'es'}`;
+        n > 1
+            ? 'Based on commuter searches in the last 10 minutes. The alert shows the busiest ride on your trip.'
+            : `Based on commuter searches in the last 10 minutes - ${stats[0].n} search${stats[0].n == 1 ? '' : 'es'}`;
 
     $('rode').disabled = false;
-    $('rode').textContent = '✓ I rode this route';
+    $('rode').textContent = n > 1 ? '✓ I rode this trip' : '✓ I rode this route';
 
     $('selected').classList.remove('hidden');
 
@@ -187,7 +260,10 @@ $('list').onclick = e => {
 };
 
 $('rode').onclick = () => {
-    DB.log('boarding', current);
+    if (!current) return;
+
+    current.legs.forEach(l => DB.log('boarding', l.route));
+
     $('rode').textContent = 'Thanks! Boarding confirmed';
     $('rode').disabled = true;
 };
@@ -196,6 +272,9 @@ $('cancel').onclick = () => {
     $('from').value = '';
     $('to').value = '';
     $('err').textContent = '';
+
+    plans = [];
+    current = null;
 
     ['results', 'selected'].forEach(id =>
         $(id).classList.add('hidden')
