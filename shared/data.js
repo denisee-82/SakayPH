@@ -614,7 +614,7 @@ function planTrip(fromStops, toStops) {
 const L = (name, aliases = [], stops = []) => ({ name, aliases, stops });
 
 const LANDMARKS = [
-    L("Abreeza Mall", [], ["Abreeza Mall"]),
+    L("Abreeza Mall", ["Abreeza"], ["Abreeza Mall"]),
     L("Acacia / Molave (Buhangin)", ["Acacia", "Molave"], ["Acacia/Molave"]),
     L("Agdao Public Market", ["Agdao"], ["Agdao Public Market"]),
     L("Ateneo de Davao University", ["Ateneo", "ADDU"]),
@@ -720,7 +720,7 @@ const LANDMARKS = [
     L("University of Mindanao", ["UM"], ["Ponciano"]),
     L("USEP", [], ["Obrero"]),
 
-    L("Victoria Plaza", ["Victoria Plaza Mall"], ["Victoria Plaza"]),
+    L("Victoria Plaza", ["Victoria Plaza Mall", "Victoria"], ["Victoria Plaza"]),
 
     L("Wa-an"),
     L("Waterfront Insular Hotel", ["Waterfront"]),
